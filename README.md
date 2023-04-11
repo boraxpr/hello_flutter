@@ -1,16 +1,6 @@
 # my_first_flutter_app
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Once upon a time, I let GitHub Copilot (OpenAI) teach me Flutter.
+It began with me trying to understand a Flutter code architecture.
+Tutorials after tutorials, they only provide code with no deep explanation of what each part does.
+I decided to spin up a very basic Flutter app (Flutter Demo) and let Copilot explains to me in the comments.
