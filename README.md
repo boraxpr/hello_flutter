@@ -1,8 +1,8 @@
 # my_first_flutter_app
 
-Once upon a time, I let GitHub Copilot (OpenAI) teach me Flutter.
-It began with me trying to understand a Flutter code architecture.
-Tutorials after tutorials, they only provide code with no deep explanation of what each part does.
+Once upon a time, I let GitHub Copilot (OpenAI) teach me Flutter.<br>
+It began with me trying to understand a Flutter code architecture.<br>
+Tutorials after tutorials, they only provide code with no deep explanation of what each part does.<br>
 Following Codelabs ( https://codelabs.developers.google.com/ ),I decided to spin up a very basic Flutter app (Flutter Demo) and let Copilot explains to me in the comments.
 
 I understand about widgets that is each parts of Flutter components is a widget. <br>
