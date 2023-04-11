@@ -1,8 +1,13 @@
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:window_manager/window_manager.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await windowManager.ensureInitialized();
+  windowManager.setAlwaysOnTop(true);
   //Run MyApp
   runApp(MyApp());
 }
@@ -36,6 +41,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Namer App',
         theme: ThemeData(
+          fontFamily: 'Raleway',
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
         ),
@@ -47,41 +53,183 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
+  var favorites = <WordPair>[];
+
   // get next word pair then notify listeners (a method from ChangeNotifier)
   // to ensure that any widgets that are listening to this object will rebuild.
   void getNext() {
     current = WordPair.random();
     notifyListeners();
   }
+
+  void toggleFavorite() {
+    if (favorites.contains(current)) {
+      favorites.remove(current);
+    } else {
+      favorites.add(current);
+    }
+    notifyListeners();
+  }
 }
 
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
+//Stateful widget to manage the state of the home page
+//Stateful widgets maintain state that might change during the lifetime of the widget.
+class MyHomePage extends StatefulWidget {
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
 
-  // 1. The build method is called whenever the widget needs to be rebuilt.
+//Private class to manage the state of the home page
+class _MyHomePageState extends State<MyHomePage> {
+  var selectedIndex = 0;
   @override
   Widget build(BuildContext context) {
-    // 2. The context parameter is used to access information about the location of a widget in the widget tree.
+    Widget page;
+    switch (selectedIndex) {
+      case 0:
+        page = GeneratorPage();
+        break;
+      case 1:
+        page = FavoritesPage();
+        break;
+      case 2:
+        page = Placeholder();
+        SystemNavigator.pop();
+        break;
+      default:
+        throw UnimplementedError('no widget for $selectedIndex');
+    }
+    return LayoutBuilder(builder: (context, constraints) {
+      return Scaffold(
+        body: Row(
+          children: [
+            SafeArea(
+              child: NavigationRail(
+                extended: constraints.maxWidth >= 600,
+                destinations: [
+                  NavigationRailDestination(
+                    icon: Icon(Icons.home),
+                    label: Text('Home'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.favorite),
+                    label: Text('Favorites'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.exit_to_app),
+                    label: Text('Exit'),
+                  ),
+                ],
+                selectedIndex: selectedIndex,
+                onDestinationSelected: (value) {
+                  setState(() {
+                    selectedIndex = value;
+                  });
+                },
+              ),
+            ),
+            Expanded(
+              child: Container(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: page,
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+class GeneratorPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
-    // 3. The context.watch method is used to listen to changes in the MyAppState object.
-    // 4. Every build method must return a widget. In this case, It returns Scaffold, which is a layout for the major Material Components.
-    return Scaffold(
-      // 5. Column is a layout widget that displays its children in a vertical array.
-      body: Column(
+    var pair = appState.current;
+
+    IconData icon;
+    if (appState.favorites.contains(pair)) {
+      icon = Icons.favorite;
+    } else {
+      icon = Icons.favorite_border;
+    }
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // 6. The Text widget displays a string of text with single style.
-          Text('A random AWESOME idea:'),
-          // 7. App state is a variable that contains the current word pair.
-          // 8. The asLowerCase method converts the word pair to lowercase.
-          Text(appState.current.asLowerCase),
-          ElevatedButton(
-            onPressed: () {
-              appState.getNext();
-            },
-            child: Text('Next'),
+          BigCard(wordPair: pair),
+          SizedBox(height: 10),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  appState.toggleFavorite();
+                },
+                icon: Icon(icon),
+                label: Text('Like'),
+              ),
+              SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () {
+                  appState.getNext();
+                },
+                child: Text('Next'),
+              ),
+            ],
           ),
-        ], // trailing comma makes auto-formatting nicer for build methods.
+        ],
       ),
+    );
+  }
+}
+
+class BigCard extends StatelessWidget {
+  const BigCard({
+    super.key,
+    required this.wordPair,
+  });
+
+  final WordPair wordPair;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final style = theme.textTheme.displayMedium!.copyWith(
+      color: theme.colorScheme.onPrimary,
+      fontSize: 70,
+    );
+    return Card(
+      color: theme.colorScheme.secondary,
+      elevation: 10,
+      child: Padding(
+        padding: const EdgeInsets.all(60),
+        child: Text(
+          wordPair.asLowerCase,
+          style: style,
+          semanticsLabel: "${wordPair.first} ${wordPair.second}",
+        ),
+      ),
+    );
+  }
+}
+
+class FavoritesPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+    return ListView.builder(
+      itemCount: appState.favorites.length,
+      itemBuilder: (context, index) {
+        var pair = appState.favorites[index];
+        return ListTile(
+          title: Text(pair.asLowerCase),
+          onTap: () {
+            Clipboard.setData(ClipboardData(text: pair.asLowerCase));
+          },
+        );
+      },
     );
   }
 }
