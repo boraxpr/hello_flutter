@@ -14,6 +14,7 @@ In contrast, Stateful widget is dynamic and is the best way to update variables,
 - Nullable, late init variables.
 - Commonly used widgets.
 - Multiple pages app.
+- Responsive app.
 
 ## Added Features:
 ### 1. Camera Preview
