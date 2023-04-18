@@ -150,48 +150,66 @@ class _MyHomePageState extends State<MyHomePage> {
       case 2:
         page = TakePictureScreen(camera: widget.camera);
         break;
+      case 3:
+        page = FileBrowsePage();
+        break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
     return LayoutBuilder(builder: (context, constraints) {
       return Scaffold(
-        body: Row(
-          children: [
-            SafeArea(
-              child: NavigationRail(
-                extended: constraints.maxWidth >= 600,
-                destinations: [
-                  NavigationRailDestination(
-                    icon: Icon(Icons.home),
-                    label: Text('Home'),
-                  ),
-                  NavigationRailDestination(
-                    icon: Icon(Icons.favorite),
-                    label: Text('Favorites'),
-                  ),
-                  NavigationRailDestination(
-                    icon: Icon(Icons.camera),
-                    label: Text('Camera'),
-                  ),
-                ],
-                selectedIndex: selectedIndex,
-                onDestinationSelected: (value) {
-                  setState(() {
-                    selectedIndex = value;
-                  });
-                },
-              ),
+        body: Center(
+          child: page,
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
             ),
-            Expanded(
-              child: Container(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: page,
-              ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.favorite),
+              label: 'Favorites',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.camera),
+              label: 'Camera',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.folder),
+              label: 'File Browser',
             ),
           ],
+          currentIndex: selectedIndex,
+          selectedItemColor: Colors.amber[800],
+          onTap: (int index) {
+            setState(() => selectedIndex = index);
+          },
         ),
       );
     });
+  }
+}
+
+class FileBrowsePage extends StatefulWidget {
+  const FileBrowsePage({super.key});
+  @override
+  State<FileBrowsePage> createState() => _FileBrowsePageState();
+}
+
+//File Browse Page
+class _FileBrowsePageState extends State<FileBrowsePage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('File Browser'),
+      ),
+      body: Center(
+        child: Text('File Browser'),
+      ),
+    );
   }
 }
 
@@ -210,7 +228,7 @@ class _TakePictureScreenState extends State<TakePictureScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = CameraController(widget.camera, ResolutionPreset.medium);
+    _controller = CameraController(widget.camera, ResolutionPreset.max);
     _initializeControllerFuture = _controller.initialize();
   }
 
@@ -232,7 +250,17 @@ class _TakePictureScreenState extends State<TakePictureScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             // If the Future is complete, display the preview.
-            return CameraPreview(_controller);
+            return Stack(
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                  child: AspectRatio(
+                      aspectRatio: _controller.value.aspectRatio,
+                      child: CameraPreview(_controller)),
+                ),
+              ],
+            );
           } else {
             // Otherwise, display a loading indicator.
             return const Center(child: CircularProgressIndicator());
