@@ -10,8 +10,12 @@ There are 2 types of widgets ie. stateless and stateful widgets. <br>
 A stateless widget is static and the only way to change them is through manually updates by making use of ChangeNotifier. <br>
 In contrast, Stateful widget is dynamic and is the best way to update variables, widgets.
 
-Added Features:
-1. Camera Preview
-2. Take a photo
-3. Detect when there is no camera available (In iOS simulator, there is no camera testing capabilities i.e. availableCamera = 0)
+## Added Features:
+### 1. Camera Preview
+### 2. Take a picture
+![](/screenshots/Screenshot_1681784571.png)
+### 3. Detect when there is no camera available (In iOS simulator, there is no camera testing capabilities i.e. availableCamera = 0)
+![](/screenshots/Simulator%20Screen%20Shot%20-%20iPhone%2014%20Pro%20Max%20-%202023-04-18%20at%2009.21.51.png)
+
+![My First Flutter App Demo GIF](/screenshots/My%20First%20Flutter%20App.gif)
 
