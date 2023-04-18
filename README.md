@@ -1,4 +1,6 @@
 # my_first_flutter_app
+![My First Flutter App Demo GIF](/screenshots/My%20First%20Flutter%20App.gif)
+
 
 Once upon a time, I let GitHub Copilot (OpenAI) teach me Flutter.<br>
 It began with me trying to understand a Flutter code architecture.<br>
@@ -16,6 +18,3 @@ In contrast, Stateful widget is dynamic and is the best way to update variables,
 ![](/screenshots/Screenshot_1681784571.png)
 ### 3. Detect when there is no camera available (In iOS simulator, there is no camera testing capabilities i.e. availableCamera = 0)
 ![](/screenshots/Simulator%20Screen%20Shot%20-%20iPhone%2014%20Pro%20Max%20-%202023-04-18%20at%2009.21.51.png)
-
-![My First Flutter App Demo GIF](/screenshots/My%20First%20Flutter%20App.gif)
-
