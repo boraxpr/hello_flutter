@@ -38,6 +38,9 @@ dependencies:
   english_words:
   provider:
   window_manager:
+  camera:
+  path_provider:
+  path:
 
 dev_dependencies:
   flutter_test:

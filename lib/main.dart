@@ -1,15 +1,30 @@
+import 'dart:io';
+import 'dart:ui';
+
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:camera/camera.dart';
 
 Future<void> main() async {
+  // Ensure that plugin services are initialized so that `availableCameras()`
+  // can be called before `runApp()`
   WidgetsFlutterBinding.ensureInitialized();
-  await windowManager.ensureInitialized();
-  windowManager.setAlwaysOnTop(true);
+
+  // Obtain a list of the available cameras on the device.
+  final cameras = await availableCameras();
+
+  // Get a specific camera from the list of available cameras.
+  final firstCamera = cameras.first;
+
+  if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+    await windowManager.ensureInitialized();
+    windowManager.setAlwaysOnTop(true);
+  }
   //Run MyApp
-  runApp(MyApp());
+  runApp(MyApp(camera: firstCamera));
 }
 
 /* GitHub Copilot teacher:
@@ -32,8 +47,8 @@ Future<void> main() async {
 -- Then, when the user interacts with the app, the framework handles the interaction by scheduling a new frame for the UI, which causes the framework to rebuild the widget tree in the zone where the interaction occurred.
 */
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
+  const MyApp({super.key, required this.camera});
+  final CameraDescription camera;
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -45,7 +60,8 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
         ),
-        home: MyHomePage(),
+        home: MyHomePage(camera: camera),
+        debugShowCheckedModeBanner: false,
       ),
     );
   }
@@ -54,7 +70,6 @@ class MyApp extends StatelessWidget {
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
   var favorites = <WordPair>[];
-
   // get next word pair then notify listeners (a method from ChangeNotifier)
   // to ensure that any widgets that are listening to this object will rebuild.
   void getNext() {
@@ -70,11 +85,18 @@ class MyAppState extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  void removeFavorite(WordPair pair) {
+    favorites.remove(pair);
+    notifyListeners();
+  }
 }
 
 //Stateful widget to manage the state of the home page
 //Stateful widgets maintain state that might change during the lifetime of the widget.
 class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.camera});
+  final CameraDescription camera;
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
@@ -93,8 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
         page = FavoritesPage();
         break;
       case 2:
-        page = Placeholder();
-        SystemNavigator.pop();
+        page = TakePictureScreen(camera: widget.camera);
         break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -116,8 +137,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     label: Text('Favorites'),
                   ),
                   NavigationRailDestination(
-                    icon: Icon(Icons.exit_to_app),
-                    label: Text('Exit'),
+                    icon: Icon(Icons.camera),
+                    label: Text('Camera'),
                   ),
                 ],
                 selectedIndex: selectedIndex,
@@ -141,7 +162,106 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+class TakePictureScreen extends StatefulWidget {
+  const TakePictureScreen({super.key, required this.camera});
+
+  final CameraDescription camera;
+  @override
+  State<TakePictureScreen> createState() => _TakePictureScreenState();
+}
+
+class _TakePictureScreenState extends State<TakePictureScreen> {
+  late CameraController _controller;
+  late Future<void> _initializeControllerFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = CameraController(widget.camera, ResolutionPreset.medium);
+    _initializeControllerFuture = _controller.initialize();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Take a picture')),
+      // You must wait until the controller is initialized before displaying the
+      // camera preview. Use a FutureBuilder to display a loading spinner until the
+      // controller has finished initializing.
+      body: FutureBuilder<void>(
+        future: _initializeControllerFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            // If the Future is complete, display the preview.
+            return CameraPreview(_controller);
+          } else {
+            // Otherwise, display a loading indicator.
+            return const Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        // Provide an onPressed callback.
+        onPressed: () async {
+          // Take the Picture in a try / catch block. If anything goes wrong,
+          // catch the error.
+          try {
+            // Ensure that the camera is initialized.
+            await _initializeControllerFuture;
+
+            // Attempt to take a picture and get the file `image`
+            // where it was saved.
+            final image = await _controller.takePicture();
+
+            if (!mounted) return;
+
+            // If the picture was taken, display it on a new screen.
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => DisplayPictureScreen(
+                  // Pass the automatically generated path to
+                  // the DisplayPictureScreen widget.
+                  imagePath: image.path,
+                ),
+              ),
+            );
+          } catch (e) {
+            // If an error occurs, log the error to the console.
+            print(e);
+          }
+        },
+        child: const Icon(Icons.camera_alt),
+      ),
+    );
+  }
+}
+
+// A widget that displays the picture taken by the user.
+class DisplayPictureScreen extends StatelessWidget {
+  final String imagePath;
+
+  const DisplayPictureScreen({super.key, required this.imagePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Display the Picture')),
+      // The image is stored as a file on the device. Use the `Image.file`
+      // constructor with the given path to display the image.
+      body: Image.file(File(imagePath)),
+    );
+  }
+}
+
 class GeneratorPage extends StatelessWidget {
+  const GeneratorPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
@@ -216,18 +336,38 @@ class BigCard extends StatelessWidget {
 }
 
 class FavoritesPage extends StatelessWidget {
+  const FavoritesPage({super.key});
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
+    if (appState.favorites.isEmpty) {
+      return Center(
+        child: Text(
+          'No favorites yet',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+      );
+    }
     return ListView.builder(
       itemCount: appState.favorites.length,
       itemBuilder: (context, index) {
         var pair = appState.favorites[index];
-        return ListTile(
-          title: Text(pair.asLowerCase),
-          onTap: () {
-            Clipboard.setData(ClipboardData(text: pair.asLowerCase));
-          },
+        return Material(
+          elevation: 15.0,
+          shadowColor: Colors.deepOrange.shade300,
+          child: ListTile(
+            title: Text(pair.asLowerCase),
+            onTap: () {
+              //copy to clipboard
+              Clipboard.setData(ClipboardData(text: pair.asLowerCase));
+            },
+            trailing: IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () {
+                appState.removeFavorite(pair);
+              },
+            ),
+          ),
         );
       },
     );
