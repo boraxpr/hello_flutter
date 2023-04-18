@@ -1,6 +1,6 @@
 # my_first_flutter_app
 
-![My First Flutter App Demo GIF](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMWExOTZjMTdlZGUzMTJkZWE1MjMyZWExYzY2OWRiOTk5ODU4NzRkNyZjdD1n/iQfa4gy8yhZuxclx1j/giphy.gif) <br>
+![My First Flutter App Demo GIF](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNDk4ZDkxMDkwYWU2MmIxMGM5ZDc3YWI0YmMyZTQxZmIwMTYxZTRmNiZjdD1n/6EEWZPCyH25v1q9mZl/giphy-downsized-large.gif) <br>
 Once upon a time, I let GitHub Copilot (OpenAI) teach me Flutter.<br>
 It began with me trying to understand a Flutter code architecture.<br>
 Tutorials after tutorials, they only provide code with no deep explanation of what each part does.<br>
@@ -19,6 +19,6 @@ In contrast, Stateful widget is dynamic and is the best way to update variables,
 ## Added Features:
 ### 1. Camera Preview
 ### 2. Take a picture
-![](/screenshots/Screenshot_1681784571.png)
+![](/screenshots/Screenshot_1681803427.png)
 ### 3. Detect when there is no camera available (In iOS simulator, there is no camera testing capabilities i.e. availableCamera = 0)
-![](/screenshots/Simulator%20Screen%20Shot%20-%20iPhone%2014%20Pro%20Max%20-%202023-04-18%20at%2009.21.51.png)
+![](/screenshots/Screenshot_1681803285.png)
