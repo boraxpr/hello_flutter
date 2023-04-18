@@ -1,7 +1,7 @@
 # my_first_flutter_app (https://codelabs.developers.google.com/ )
 ## Tutorial version
 ![](/screenshots/1d26af443561f39c.gif)
-## My version (Added : Camera, ElevatedButton, Remove Favorite Button)
+## My version (Added : From NavigatorRail to ButtomNavigatorBar, Camera, ElevatedButton, Remove Favorite Button)
 ![My First Flutter App Demo GIF](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNDk4ZDkxMDkwYWU2MmIxMGM5ZDc3YWI0YmMyZTQxZmIwMTYxZTRmNiZjdD1n/6EEWZPCyH25v1q9mZl/giphy-downsized-large.gif) <br>
 Once upon a time, I let GitHub Copilot (OpenAI) teach me Flutter.<br>
 It began with me trying to understand a Flutter code architecture.<br>
