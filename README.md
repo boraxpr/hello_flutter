@@ -1,7 +1,6 @@
 # my_first_flutter_app
-![My First Flutter App Demo GIF](/screenshots/My%20First%20Flutter%20App.gif)
 
-
+![My First Flutter App Demo GIF](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMWExOTZjMTdlZGUzMTJkZWE1MjMyZWExYzY2OWRiOTk5ODU4NzRkNyZjdD1n/iQfa4gy8yhZuxclx1j/giphy.gif) 
 Once upon a time, I let GitHub Copilot (OpenAI) teach me Flutter.<br>
 It began with me trying to understand a Flutter code architecture.<br>
 Tutorials after tutorials, they only provide code with no deep explanation of what each part does.<br>
