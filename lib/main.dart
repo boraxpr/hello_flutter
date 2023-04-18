@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +8,11 @@ import 'package:window_manager/window_manager.dart';
 import 'package:camera/camera.dart';
 
 Future<void> main() async {
+  if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+    await windowManager.ensureInitialized();
+    windowManager.setAlwaysOnTop(true);
+  }
+
   // Ensure that plugin services are initialized so that `availableCameras()`
   // can be called before `runApp()`
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,14 +21,13 @@ Future<void> main() async {
   final cameras = await availableCameras();
 
   // Get a specific camera from the list of available cameras.
-  final firstCamera = cameras.first;
-
-  if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-    await windowManager.ensureInitialized();
-    windowManager.setAlwaysOnTop(true);
+  if (cameras.isNotEmpty) {
+    final firstCamera = cameras.first;
+    //Run MyApp
+    runApp(MyApp(camera: firstCamera));
+  } else {
+    runApp(NoCamera());
   }
-  //Run MyApp
-  runApp(MyApp(camera: firstCamera));
 }
 
 /* GitHub Copilot teacher:
@@ -54,7 +57,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
       child: MaterialApp(
-        title: 'Namer App',
+        title: 'My First Flutter App',
         theme: ThemeData(
           fontFamily: 'Raleway',
           useMaterial3: true,
@@ -89,6 +92,36 @@ class MyAppState extends ChangeNotifier {
   void removeFavorite(WordPair pair) {
     favorites.remove(pair);
     notifyListeners();
+  }
+}
+
+class NoCamera extends StatefulWidget {
+  const NoCamera({super.key});
+  @override
+  State<NoCamera> createState() => _NoCameraState();
+}
+
+class _NoCameraState extends State<NoCamera> {
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.headlineLarge;
+    return MaterialApp(
+      title: 'My First Flutter App',
+      theme: ThemeData(
+        fontFamily: 'Raleway',
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
+      ),
+      home: Scaffold(
+        body: Center(
+          child: Text(
+            'No Camera',
+            style: style,
+          ),
+        ),
+      ),
+      debugShowCheckedModeBanner: false,
+    );
   }
 }
 
