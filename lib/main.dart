@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:camera/camera.dart';
+import 'package:file_picker/file_picker.dart';
 
 Future<void> main() async {
   if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
@@ -73,6 +74,8 @@ class MyApp extends StatelessWidget {
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
   var favorites = <WordPair>[];
+  var files = <File>[];
+
   // get next word pair then notify listeners (a method from ChangeNotifier)
   // to ensure that any widgets that are listening to this object will rebuild.
   void getNext() {
@@ -91,6 +94,16 @@ class MyAppState extends ChangeNotifier {
 
   void removeFavorite(WordPair pair) {
     favorites.remove(pair);
+    notifyListeners();
+  }
+
+  void addFile(File file) {
+    files.add(file);
+    notifyListeners();
+  }
+
+  void removeFile(File file) {
+    files.remove(file);
     notifyListeners();
   }
 }
@@ -148,15 +161,22 @@ class _MyHomePageState extends State<MyHomePage> {
         page = FavoritesPage();
         break;
       case 2:
-        page = TakePictureScreen(camera: widget.camera);
+        page = TakePictureScreen(
+          camera: widget.camera,
+        );
         break;
       case 3:
         page = FileBrowsePage();
         break;
       default:
-        throw UnimplementedError('no widget for $selectedIndex');
+        throw UnimplementedError(
+          'no widget for $selectedIndex',
+        );
     }
-    return LayoutBuilder(builder: (context, constraints) {
+    return LayoutBuilder(builder: (
+      context,
+      constraints,
+    ) {
       return Scaffold(
         body: Center(
           child: page,
@@ -202,12 +222,55 @@ class FileBrowsePage extends StatefulWidget {
 class _FileBrowsePageState extends State<FileBrowsePage> {
   @override
   Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+    // if (appState.files.isEmpty) {
+    //   return Center(
+    //     child: Text(
+    //       'No Files yet',
+    //       style: Theme.of(context).textTheme.headlineSmall,
+    //     ),
+
+    //   );
+    // }
     return Scaffold(
-      appBar: AppBar(
-        title: Text('File Browser'),
+      body: ListView.builder(
+        itemCount: appState.files.length,
+        itemBuilder: (context, index) {
+          File file = appState.files[index];
+          String fileName = file.path.split('/').last;
+          return Material(
+            elevation: 15.0,
+            shadowColor: Colors.deepOrange.shade300,
+            child: ListTile(
+              title: Text(
+                fileName,
+              ),
+              trailing: Wrap(
+                children: <Widget>[
+                  IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () {
+                      appState.removeFile(file);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
-      body: Center(
-        child: Text('File Browser'),
+      floatingActionButton: FloatingActionButton(
+        // Provide an onPressed callback.
+        // Provide an onPressed callback.
+        onPressed: () async {
+          final file = await FilePicker.platform.pickFiles();
+          if (file != null) {
+            appState.addFile(
+              File(file.files.single.path!),
+            );
+          }
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -228,7 +291,10 @@ class _TakePictureScreenState extends State<TakePictureScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = CameraController(widget.camera, ResolutionPreset.max);
+    _controller = CameraController(
+      widget.camera,
+      ResolutionPreset.max,
+    );
     _initializeControllerFuture = _controller.initialize();
   }
 
@@ -307,7 +373,10 @@ class _TakePictureScreenState extends State<TakePictureScreen> {
 class DisplayPictureScreen extends StatelessWidget {
   final String imagePath;
 
-  const DisplayPictureScreen({super.key, required this.imagePath});
+  const DisplayPictureScreen({
+    super.key,
+    required this.imagePath,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -395,8 +464,14 @@ class BigCard extends StatelessWidget {
   }
 }
 
-class FavoritesPage extends StatelessWidget {
+class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key});
+
+  @override
+  State<FavoritesPage> createState() => _FavoritesPageState();
+}
+
+class _FavoritesPageState extends State<FavoritesPage> {
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
