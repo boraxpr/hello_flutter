@@ -347,6 +347,9 @@ class DisplayPictureScreen extends StatelessWidget {
     File imageFile = File(imagePath);
     List<int> imageBytes = imageFile.readAsBytesSync();
     base64Image = base64Encode(imageBytes);
+    // Save base64 to appState
+    var appState = context.watch<MyAppState>();
+    appState.base64Image = base64Image;
     return Scaffold(
       appBar: AppBar(title: const Text('Display the Picture')),
       // The image is stored as a file on the device. Use the `Image.file`
