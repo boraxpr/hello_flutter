@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:english_words/english_words.dart';
@@ -75,6 +76,7 @@ class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
   var favorites = <WordPair>[];
   var files = <File>[];
+  var base64Image = '';
 
   // get next word pair then notify listeners (a method from ChangeNotifier)
   // to ensure that any widgets that are listening to this object will rebuild.
@@ -166,7 +168,7 @@ class _MyHomePageState extends State<MyHomePage> {
         );
         break;
       case 3:
-        page = FileBrowsePage();
+        page = Base64ToImagePage();
         break;
       default:
         throw UnimplementedError(
@@ -197,8 +199,8 @@ class _MyHomePageState extends State<MyHomePage> {
               label: 'Camera',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.folder),
-              label: 'File Browser',
+              icon: Icon(Icons.code),
+              label: 'Base64 to Img',
             ),
           ],
           currentIndex: selectedIndex,
@@ -212,65 +214,25 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class FileBrowsePage extends StatefulWidget {
-  const FileBrowsePage({super.key});
+class Base64ToImagePage extends StatefulWidget {
+  const Base64ToImagePage({super.key});
+
   @override
-  State<FileBrowsePage> createState() => _FileBrowsePageState();
+  State<Base64ToImagePage> createState() => _Base64ToImagePageState();
 }
 
-//File Browse Page
-class _FileBrowsePageState extends State<FileBrowsePage> {
+class _Base64ToImagePageState extends State<Base64ToImagePage> {
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
-    // if (appState.files.isEmpty) {
-    //   return Center(
-    //     child: Text(
-    //       'No Files yet',
-    //       style: Theme.of(context).textTheme.headlineSmall,
-    //     ),
-
-    //   );
-    // }
+    ImageProvider image = appState.base64Image.isEmpty
+        ? AssetImage("assets/icons/43258373.png")
+        : MemoryImage(base64Decode(appState.base64Image)) as ImageProvider;
     return Scaffold(
-      body: ListView.builder(
-        itemCount: appState.files.length,
-        itemBuilder: (context, index) {
-          File file = appState.files[index];
-          String fileName = file.path.split('/').last;
-          return Material(
-            elevation: 15.0,
-            shadowColor: Colors.deepOrange.shade300,
-            child: ListTile(
-              title: Text(
-                fileName,
-              ),
-              trailing: Wrap(
-                children: <Widget>[
-                  IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () {
-                      appState.removeFile(file);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        // Provide an onPressed callback.
-        // Provide an onPressed callback.
-        onPressed: () async {
-          final file = await FilePicker.platform.pickFiles();
-          if (file != null) {
-            appState.addFile(
-              File(file.files.single.path!),
-            );
-          }
-        },
-        child: const Icon(Icons.add),
+      body: Center(
+        child: Image(
+          image: image,
+        ),
       ),
     );
   }
@@ -380,11 +342,16 @@ class DisplayPictureScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String base64Image;
+    // Image file to base64
+    File imageFile = File(imagePath);
+    List<int> imageBytes = imageFile.readAsBytesSync();
+    base64Image = base64Encode(imageBytes);
     return Scaffold(
       appBar: AppBar(title: const Text('Display the Picture')),
       // The image is stored as a file on the device. Use the `Image.file`
       // constructor with the given path to display the image.
-      body: Image.file(File(imagePath)),
+      body: Image.file(imageFile),
     );
   }
 }
@@ -505,6 +472,62 @@ class _FavoritesPageState extends State<FavoritesPage> {
           ),
         );
       },
+    );
+  }
+}
+
+class FileBrowsePage extends StatefulWidget {
+  const FileBrowsePage({super.key});
+  @override
+  State<FileBrowsePage> createState() => _FileBrowsePageState();
+}
+
+//File Browse Page
+class _FileBrowsePageState extends State<FileBrowsePage> {
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+    return Scaffold(
+      body: ListView.builder(
+        itemCount: appState.files.length,
+        itemBuilder: (context, index) {
+          File file = appState.files[index];
+          String fileName = file.path.split('/').last;
+          return Material(
+            elevation: 15.0,
+            shadowColor: Colors.deepOrange.shade300,
+            child: ListTile(
+              leading: Icon(Icons.image),
+              title: Text(
+                fileName,
+              ),
+              trailing: Wrap(
+                children: <Widget>[
+                  IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () {
+                      appState.removeFile(file);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        // Provide an onPressed callback.
+        // Provide an onPressed callback.
+        onPressed: () async {
+          final file = await FilePicker.platform.pickFiles();
+          if (file != null) {
+            appState.addFile(
+              File(file.files.single.path!),
+            );
+          }
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }

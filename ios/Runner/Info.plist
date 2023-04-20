@@ -9,6 +9,9 @@
 <key>NSMicrophoneUsageDescription</key>
 <string>Please grant microphone access</string>
 
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Please grant photo library access</string>
+
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
