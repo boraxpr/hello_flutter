@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:camera/camera.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:local_auth/local_auth.dart';
 
 Future<void> main() async {
   if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
@@ -26,37 +27,28 @@ Future<void> main() async {
   if (cameras.isNotEmpty) {
     final firstCamera = cameras.first;
     //Run MyApp
-    runApp(MyApp(camera: firstCamera));
+    runApp(
+      MyApp(
+        camera: firstCamera,
+      ),
+    );
   } else {
     runApp(NoCamera());
   }
 }
 
-/* GitHub Copilot teacher:
--- Widgets are the building blocks of a Flutter app.
--- In Flutter, almost everything is a widget, including alignment, padding, and layout.
--- Widgets are immutable, meaning that their properties can’t change—all values are final.
--- Widgets are used to build everything in Flutter, from the smallest icon to the largest screen.
--- Widgets are the basic building blocks of a Flutter app’s user interface and they form a hierarchy based on composition.
--- This hierarchy is called the widget tree.
--- Each widget nests inside its parent and receives context from the parent.
--- Widgets can be stateful or stateless.
--- A stateless widget is drawn to the screen and is never redrawn.
--- A stateful widget can change dynamically, for example by animating a property in response to user input.
--- When the state of a widget changes, the widget rebuilds its user interface by calling the build method. 
--- The framework then compares the new version of the widget tree to the previous version and determines the minimum changes needed in the underlying render tree to ensure that the user interface reflects the changes.
--- The framework then updates the render tree, which results in visual changes on the device.
--- The widget tree is a lightweight object that can be easily discarded and regenerated, but the render tree is a heavy object that requires a lot of processing to build and update.
--- The framework optimizes the build process by caching the render tree. When the widget tree is rebuilt, the framework compares the new version of the widget tree to the previous version and determines what has changed.
--- The framework then updates the render tree accordingly, without having to go through the heavy process of calculating the changes.
--- Then, when the user interacts with the app, the framework handles the interaction by scheduling a new frame for the UI, which causes the framework to rebuild the widget tree in the zone where the interaction occurred.
-*/
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key, required this.camera});
   final CameraDescription camera;
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
+    return ChangeNotifierProvider<MyAppState>(
       create: (context) => MyAppState(),
       child: MaterialApp(
         title: 'My First Flutter App',
@@ -65,7 +57,9 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
         ),
-        home: MyHomePage(camera: camera),
+        home: MyHomePage(
+          camera: widget.camera,
+        ),
         debugShowCheckedModeBanner: false,
       ),
     );
@@ -145,6 +139,7 @@ class _NoCameraState extends State<NoCamera> {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.camera});
   final CameraDescription camera;
+
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
@@ -168,7 +163,10 @@ class _MyHomePageState extends State<MyHomePage> {
         );
         break;
       case 3:
-        page = Base64ToImagePage();
+        page = IDCardPage();
+        break;
+      case 4:
+        page = FingerprintPage();
         break;
       default:
         throw UnimplementedError(
@@ -199,8 +197,12 @@ class _MyHomePageState extends State<MyHomePage> {
               label: 'Camera',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.code),
-              label: 'Base64 to Img',
+              icon: Icon(Icons.perm_identity_rounded),
+              label: 'IDCard',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.fingerprint),
+              label: 'Fingerprint',
             ),
           ],
           currentIndex: selectedIndex,
@@ -214,28 +216,40 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class Base64ToImagePage extends StatefulWidget {
-  const Base64ToImagePage({super.key});
-
+class FingerprintPage extends StatefulWidget {
+  const FingerprintPage({super.key});
   @override
-  State<Base64ToImagePage> createState() => _Base64ToImagePageState();
+  State<FingerprintPage> createState() => _FingerprintPageState();
 }
 
-class _Base64ToImagePageState extends State<Base64ToImagePage> {
+class _FingerprintPageState extends State<FingerprintPage> {
+  final LocalAuthentication auth = LocalAuthentication();
+  //initState
   @override
-  Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
-    ImageProvider image = appState.base64Image.isEmpty
-        ? AssetImage("assets/icons/43258373.png")
-        : MemoryImage(base64Decode(appState.base64Image)) as ImageProvider;
-    return Scaffold(
-      body: Center(
-        child: Image(
-          image: image,
-        ),
-      ),
-    );
+  Future<void> initState() async {
+    super.initState();
+    if (await _checkBiometrics()) {
+      _authenticate();
+    }
   }
+
+  @override
+  Widget build(BuildContext context) {}
+
+  Future<bool> _checkBiometrics() async {
+    //Check if biometrics are available
+    final bool canAuthenticateWithBiometrics = await auth.canCheckBiometrics;
+    final bool canAuthenticate =
+        canAuthenticateWithBiometrics || await auth.isDeviceSupported();
+    final List<BiometricType> availableBiometrics =
+        await auth.getAvailableBiometrics();
+    if (availableBiometrics.contains(BiometricType.fingerprint)) {
+      return true;
+    }
+    return false;
+  }
+
+  //TODO : Authenticate by fingerprint
 }
 
 class TakePictureScreen extends StatefulWidget {
@@ -520,7 +534,6 @@ class _FileBrowsePageState extends State<FileBrowsePage> {
       ),
       floatingActionButton: FloatingActionButton(
         // Provide an onPressed callback.
-        // Provide an onPressed callback.
         onPressed: () async {
           final file = await FilePicker.platform.pickFiles();
           if (file != null) {
@@ -530,6 +543,68 @@ class _FileBrowsePageState extends State<FileBrowsePage> {
           }
         },
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+//ID Card Page
+class IDCardPage extends StatefulWidget {
+  const IDCardPage({super.key});
+  @override
+  State<IDCardPage> createState() => _IDCardPageState();
+}
+
+class _IDCardPageState extends State<IDCardPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: IDCard());
+  }
+}
+
+class IDCard extends StatelessWidget {
+  const IDCard({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final style = theme.textTheme.displayMedium!.copyWith(
+      color: theme.colorScheme.onPrimary,
+    );
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('ID Card'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Card(
+              color: theme.colorScheme.secondary,
+              elevation: 10,
+              child: Padding(
+                padding: const EdgeInsets.all(60),
+                child: Text(
+                  'ID Card',
+                  style: style,
+                  semanticsLabel: 'ID Card',
+                ),
+              ),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => IDCardPage()),
+                );
+              },
+              child: Text('Next'),
+            ),
+          ],
+        ),
       ),
     );
   }
