@@ -43,6 +43,7 @@ dependencies:
   file_picker: ^5.2.9
   local_auth: ^2.1.6
   flutter_app_lock:
+  bloc: ^8.1.1
 
 dev_dependencies:
   flutter_test:
