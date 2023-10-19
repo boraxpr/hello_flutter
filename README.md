@@ -36,7 +36,6 @@ In contrast, Stateful widget is dynamic and is the best way to update variables,
 !['Feature: Detect Camera Unavailability'](/screenshots/Screenshot_1681803285.png)
 
 ### GitHub Copilot teacher
-
 - Widgets are the building blocks of a Flutter app.
 - In Flutter, almost everything is a widget, including alignment, padding, and layout.
 - Widgets are immutable, meaning that their properties can’t change—all values are final.
@@ -54,3 +53,40 @@ In contrast, Stateful widget is dynamic and is the best way to update variables,
 - The framework optimizes the build process by caching the render tree. When the widget tree is rebuilt, the framework compares the new version of the widget tree to the previous version and determines what has changed.
 - The framework then updates the render tree accordingly, without having to go through the heavy process of calculating the changes.
 - Then, when the user interacts with the app, the framework handles the interaction by scheduling a new frame for the UI, which causes the framework to rebuild the widget tree in the zone where the interaction occurred.
+
+### Revision 1 (19-Oct-23) : Add Biometric (Local Auth)
+![image](https://github.com/boraxpr/hello_flutter/assets/43258373/90ec4d14-57bd-4b92-8e0d-c864acd646a8)
+
+#### Knowledge gained
+- Warning "Don't use 'BuildContext's across async gaps
+  - I came across the issue by trying to Navigator.push(context,route); Change the page
+  - I learn that I should not pass BuildContext into function. Instead, I should work on page route in Widget build() then wrap it with context.mounted check.
+main.dart; @line 111-119
+```
+bool isAuthenticated = await _authenticate();
+if (isAuthenticated) {
+  if (context.mounted) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => MyApp(camera: widget.camera)));
+  }
+}
+```
+- I learn about FutureBuilder. It's possible to capture Future variable (Async function) and also snapshot instance of the variable in-action while asyncing.
+```
+icon: FutureBuilder<bool>(
+  future: _authenticate(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return CircularProgressIndicator();
+    } else {
+      return Icon(
+        snapshot.data == true ? Icons.lock_open : Icons.lock,
+      );
+    }
+  },
+)
+```
+
+TODOS : Build iOS/ Due a large gap in iOS version 11-17, many function of dependencies are now deprecated and must be updated to successfully build. 
